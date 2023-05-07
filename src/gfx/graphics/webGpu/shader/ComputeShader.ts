@@ -44,7 +44,7 @@ export class ComputeShader extends ShaderBase {
      */
     constructor(computeShader: string) {
         super();
-        this._sourceCS = computeShader;
+        this._sourceCS = computeShader.replaceAll('%m', '\n');
         ShaderReflection.getShaderReflection2(computeShader, this);
         this._storageTextureDic = new Map<string, Texture>();
         this._sampleTextureDic = new Map<string, Texture>();

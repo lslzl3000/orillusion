@@ -178,11 +178,11 @@ export class Graphic3DFixedRenderPipeline {
 
         this.mVertexShader = this.createShaderModule(
             'Graphic3DFixedRenderPipeline.vs',
-            Preprocessor.parse(Graphic3DShader_vs, {})
+            Preprocessor.parse(Graphic3DShader_vs.replaceAll('%m','\n'), {})
         );
         this.mFragmentShader = this.createShaderModule(
             'Graphic3DFixedRenderPipeline.fs',
-            Preprocessor.parse(Graphic3DShader_fs, {})
+            Preprocessor.parse(Graphic3DShader_fs.replaceAll('%m','\n'), {})
         );
 
         this.reset();

@@ -16,7 +16,7 @@ export class ErpImage2CubeMap {
             layout: `auto`,
             compute: {
                 module: device.createShaderModule({
-                    code: ErpImage2CubeMapRgbe2rgba_cs,
+                    code: ErpImage2CubeMapRgbe2rgba_cs.replaceAll('%m','\n'),
                 }),
                 entryPoint: 'main',
             },
@@ -87,7 +87,7 @@ export class ErpImage2CubeMap {
             layout: `auto`,
             compute: {
                 module: device.createShaderModule({
-                    code: ErpImage2CubeMapCreateCube_cs,
+                    code: ErpImage2CubeMapCreateCube_cs.replaceAll('%m', '\n'),
                 }),
                 entryPoint: 'main',
             },

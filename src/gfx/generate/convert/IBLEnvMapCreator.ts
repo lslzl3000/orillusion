@@ -22,7 +22,7 @@ export class IBLEnvMapCreator {
                 layout: `auto`,
                 compute: {
                     module: device.createShaderModule({
-                        code: IBLEnvMapCreator_cs,
+                        code: IBLEnvMapCreator_cs.replaceAll('%m','\n'),
                     }),
                     entryPoint: 'main',
                 },

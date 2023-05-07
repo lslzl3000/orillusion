@@ -100,7 +100,7 @@ export class ShaderLib {
 
     public static register(keyName: string, code: string) {
         if (!ShaderLib[keyName.toLowerCase()]) {
-            ShaderLib[keyName.toLowerCase()] = code;
+            ShaderLib[keyName.toLowerCase()] = code.replaceAll('%m','\n');
         }
     }
 

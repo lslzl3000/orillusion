@@ -54,6 +54,26 @@ module.exports = defineConfig({
             server.watcher.on('change', autoIndex)
             server.watcher.on('unlink', autoIndex) 
         }
+    }, {
+        name: 'wgsl',
+        transform: (code, src)=>{
+            if(src.match(/\/assets\/shader\//) && code.match(/\/.*.wgsl.*.\//)){
+                let flat = code.replace(/\n/g, '%n')
+                let wgsls = flat.match(/\`.*?\`/g)
+                if(wgsls){
+                    for(let wgsl of wgsls){
+                        let lines = wgsl.split('%n')
+                        let minified = lines.map(l=>l.trim()).join('%m')
+                        flat = flat.replace(wgsl, minified)
+                    }
+                    flat = flat.replaceAll('%n', '\n')
+                    return {
+                        code: flat,
+                        map: null
+                    }
+                }
+            }
+        }
     }],
     build: {
         lib: {

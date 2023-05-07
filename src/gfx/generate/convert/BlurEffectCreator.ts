@@ -14,7 +14,7 @@ export class BlurTexture2DBufferCreator {
             layout: `auto`,
             compute: {
                 module: device.createShaderModule({
-                    code: code,
+                    code: code.replaceAll('%m','\n'),
                 }),
                 entryPoint: 'main',
             },
