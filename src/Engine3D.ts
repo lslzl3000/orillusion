@@ -300,8 +300,7 @@ export class Engine3D {
         this.setting = { ...this.setting, ...descriptor.engineSetting }
 
         await WasmMatrix.isReady();
-
-        await WasmMatrix.init(Matrix4.maxCount);
+        WasmMatrix.init(Matrix4.maxCount);
 
         await webGPUContext.init(descriptor.canvasConfig);
 

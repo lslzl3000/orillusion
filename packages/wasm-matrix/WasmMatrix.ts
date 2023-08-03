@@ -1,4 +1,5 @@
 import { Matrix4 } from '../../src';
+import matrixjs from './matrix?raw'
 
 export class WasmMatrix {
 
@@ -15,25 +16,21 @@ export class WasmMatrix {
 
     public static async isReady(): Promise<boolean> {
         return new Promise(
-            (suc, fail) => {
+            async (suc) => {
                 const script = document.createElement('script');
                 script.async = true;
                 script.type = "text/javascript";
-                script.src = "packages/wasm-matrix/matrix.js";
+                script.src = URL.createObjectURL(new Blob([matrixjs]));
                 document.body.appendChild(script)
                 script.onload = () => {
-                    let id = setInterval(() => {
+                    let check = ()=>{
                         this.wasm = window['wasmMatrix'];
-                        if (this.wasm) {
-                            let ready = this.wasm['calledRun']
-                            if (ready) {
-                                clearInterval(id);
-                                suc(true);
-                            } else {
-                                // fail(false);
-                            }
-                        }
-                    }, 16);
+                        if (this.wasm && this.wasm['calledRun'])
+                            suc(true)
+                        else
+                            setTimeout(check, 20)
+                    }
+                    check()
                 }
             }
         )
@@ -59,7 +56,7 @@ export class WasmMatrix {
     public static setParent(matIndex: number, x: number, depthOrder: number) {
         this.matrixStateBuffer[matIndex * WasmMatrix.stateStruct + 2] = x >= 0 ? x : -1;
         this.matrixStateBuffer[matIndex * WasmMatrix.stateStruct + 3] = depthOrder;
-        console.warn(`${matIndex} -> ${depthOrder}`);
+        // console.warn(`${matIndex} -> ${depthOrder}`);
     }
 
     public static setTranslate(matIndex: number, x: number, y: number, z: number) {
