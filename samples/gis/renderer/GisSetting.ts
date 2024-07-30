@@ -1,0 +1,1 @@
+export let GisSetting = { maxQuadCount: 1000000 };

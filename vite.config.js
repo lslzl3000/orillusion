@@ -56,6 +56,15 @@ export default defineConfig(option => ({
             server.watcher.on('change', autoIndex)
             server.watcher.on('unlink', autoIndex)
         }
+    }, {
+        name: 'isolate',
+        configureServer(server) {
+            server.middlewares.use((_req, res, next) => {
+                res.setHeader("Cross-Origin-Opener-Policy", "same-origin")
+                res.setHeader("Cross-Origin-Embedder-Policy", "credentialless")
+                next()
+            });
+        }
     }],
     build: {
         target: 'esnext',

@@ -12,7 +12,7 @@ export class MemoryDO {
         if (this.shareDataBuffer && this.shareDataBuffer.byteLength < byteSize) {
             this._byteOffset = 0;
         } else {
-            this.shareDataBuffer = new ArrayBuffer(byteSize);
+            this.shareDataBuffer = typeof SharedArrayBuffer === 'undefined' ? new ArrayBuffer(byteSize) : new SharedArrayBuffer(byteSize);
         }
     }
 
