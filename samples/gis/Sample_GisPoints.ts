@@ -17,11 +17,12 @@ export class Sample_GisPoints {
     workers: Worker[] = [];
 
     _run = false;
+    _res:any = null;
     _done: number = 0;
-    _thread: number = navigator.hardwareConcurrency - 1;
+    _thread: number = navigator.hardwareConcurrency - 2;
     async run() {
 
-        await Engine3D.init({ beforeRender: () => this.update() });
+        await Engine3D.init({ beforeRender: this.update.bind(this) });
 
         this.scene = new Scene3D();
         this.scene.addComponent(Stats);
@@ -68,7 +69,7 @@ export class Sample_GisPoints {
         GisSetting.maxQuadCount = 1000000;
 
         let textureList = [];
-        textureList.push( await Engine3D.res.loadTexture(img) );
+        textureList.push( await Engine3D.res.loadTexture('/particle/dust_min.png') );
 
         let obj = new Object3D();
         this.scene.addChild(obj);
@@ -112,8 +113,8 @@ export class Sample_GisPoints {
                 this._done ++
                 if(this._done === this._thread){
                     this._done = 0
-                    this._run = false
                     position.isDirty = true
+                    this._res(true)
                     console.timeEnd('update')
                 }
             }
@@ -121,14 +122,16 @@ export class Sample_GisPoints {
         }
     }
 
-    update() {
+    async update() {
         // run workers
-        if(this.workers.length && !this._run){
-            this._run = true
-            for(let i = 0; i < this.workers.length; i++){
-                this.workers[i].postMessage('run')
-            }
-            console.time('update')
+        if(this.workers.length){
+            await new Promise(res=>{
+                this._res = res
+                for(let i = 0; i < this._thread; i++){
+                    this.workers[i].postMessage('run')
+                }
+                console.time('update')
+            })
         }
     }
 
