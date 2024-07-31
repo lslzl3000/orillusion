@@ -1,4 +1,4 @@
-import { GeometryBase, VertexAttributeName, BoundingBox, Vector3 } from "../../../../src";
+import { GeometryBase, VertexAttributeName, BoundingBox, Vector3 } from "@orillusion/core";
 
 export class GisPointGeometry extends GeometryBase {
 
@@ -26,7 +26,7 @@ export class GisPointGeometry extends GeometryBase {
 
         this.setIndices(indices_arr);
         // let normal_arr = new Float32Array(quadCount * 12);
-        let uv_arr = new Float32Array(quadCount * 8);
+        // let uv_arr = new Float32Array(quadCount * 8);
         let v_index = new Float32Array(quadCount * 4);
         for (let i = 0; i < quadCount; i++) {
             offset = i * 12;
@@ -39,18 +39,18 @@ export class GisPointGeometry extends GeometryBase {
             // normal_arr[offset + 11] = 1;
 
             //uv
-            offset = i * 8;
-            uv_arr[offset++] = 0.0;
-            uv_arr[offset++] = 0.0;
+            // offset = i * 8;
+            // uv_arr[offset++] = 0.0;
+            // uv_arr[offset++] = 0.0;
 
-            uv_arr[offset++] = 1.0;
-            uv_arr[offset++] = 0.0;
+            // uv_arr[offset++] = 1.0;
+            // uv_arr[offset++] = 0.0;
 
-            uv_arr[offset++] = 0.0;
-            uv_arr[offset++] = 1.0;
+            // uv_arr[offset++] = 0.0;
+            // uv_arr[offset++] = 1.0;
 
-            uv_arr[offset++] = 1.0;
-            uv_arr[offset++] = 1.0;
+            // uv_arr[offset++] = 1.0;
+            // uv_arr[offset++] = 1.0;
 
             //v index
             offset = i * 4;
@@ -62,9 +62,7 @@ export class GisPointGeometry extends GeometryBase {
 
 
         // this.setAttribute(VertexAttributeName.normal, normal_arr);
-        this.setAttribute(VertexAttributeName.uv, uv_arr);
         this.setAttribute(VertexAttributeName.vIndex, v_index);
-        this.setAttribute(VertexAttributeName.TEXCOORD_1, uv_arr);
 
         this.addSubGeometry({
             indexStart: 0,

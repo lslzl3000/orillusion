@@ -1,4 +1,4 @@
-import { FragmentOutput, WorldMatrixUniform, GlobalUniform } from "../../../../src";
+import { FragmentOutput, WorldMatrixUniform, GlobalUniform } from "@orillusion/core";
 
 export class GisPointShader {
     private static readonly fs: string = /* wgsl */ `
@@ -57,7 +57,6 @@ export class GisPointShader {
         
          struct VertexInput{
             @builtin(instance_index) index : u32,
-            @location(auto) uv: vec2<f32>,
             @location(auto) vIndex: f32,
         }
 
@@ -94,6 +93,22 @@ export class GisPointShader {
             }
             return ret;
         }
+
+        fn getVertexUV(index:u32) -> vec2<f32>
+        {
+            var ret = vec2<f32>(0.0);
+            if(index == 0 || index == 1){
+                ret.y = 0.0f;
+            }else{
+                ret.y = 1.0f;
+            }
+            if(index == 0 || index == 2){
+                ret.x = 0.0f;
+            }else{
+                ret.x = 1.0f;
+            }
+            return ret;
+        }
     `;
 
     public static readonly GisPointShader: string = /* wgsl */ `
@@ -117,6 +132,7 @@ export class GisPointShader {
             let quadIndex = u32(vertex.vIndex * 0.25);
 
             var localPosXY = getVertexXY(u32(vertexIndex) % 4u);
+            var localUV = getVertexUV(u32(vertexIndex) % 4u);
             localPosXY *= vSizeBuffer[quadIndex];
 
             var localPos = vec4<f32>(localPosXY.xy, vertexIndex * 0.0000001, 1.0);
@@ -144,7 +160,7 @@ export class GisPointShader {
 
             vertexOut.member = op;
             
-            vertexOut.vUV = vec2<f32>(vertex.uv);
+            vertexOut.vUV = localUV;//vec2<f32>(vertex.uv);
             vertexOut.vTextureID = vTexIndex[quadIndex];
             vertexOut.vColor4 = vColorBuffer[quadIndex];
 
