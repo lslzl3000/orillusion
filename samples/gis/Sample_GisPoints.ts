@@ -1,4 +1,3 @@
-import { GUIHelp } from "@orillusion/debug/GUIHelp";
 import { AtmosphericComponent, AxisObject, BitmapTexture2D, CameraUtil, Color, DirectLight, Engine3D, HoverCameraController, KelvinUtil, Object3D, Scene3D, Vector3, View3D, } from "@orillusion/core";
 import { Stats } from "@orillusion/stats";
 import { GisSetting } from "./renderer/GisSetting";
@@ -14,11 +13,12 @@ export class Sample_GisPoints {
     lightObj3D: Object3D;
     scene: Scene3D;
     view: View3D;
-    positionBuffer: Float32Array;
+    positionArray: Float32Array;
     workers: Worker[] = [];
+
     _run = false;
     _done: number = 0;
-    _count: number = 6;
+    _thread: number = navigator.hardwareConcurrency - 1;
     async run() {
 
         await Engine3D.init({ beforeRender: () => this.update() });
@@ -29,7 +29,7 @@ export class Sample_GisPoints {
         let camera = CameraUtil.createCamera3DObject(this.scene);
         camera.perspective(60, Engine3D.aspect, 0.01, 5000.0);
 
-        camera.object3D.addComponent(HoverCameraController).setCamera(0, 0, 100);
+        camera.object3D.addComponent(HoverCameraController).setCamera(0, -30, 400);
 
         this.view = new View3D();
         this.view.scene = this.scene;
@@ -65,6 +65,8 @@ export class Sample_GisPoints {
     }
 
     private async addPoints() {
+        GisSetting.maxQuadCount = 1000000;
+
         let textureList = [];
         textureList.push( await Engine3D.res.loadTexture(img) );
 
@@ -75,30 +77,44 @@ export class Sample_GisPoints {
 
         let attributes = renderer.attrGroup;
         let position = attributes.getAttribute('vPositionBuffer');
-        this.positionBuffer = position.array
+        this.positionArray = position.array
         
+        let raduiBuffer = new SharedArrayBuffer(GisSetting.maxQuadCount * 4)
+        let angleBuffer = new SharedArrayBuffer(GisSetting.maxQuadCount * 4)
+        let speedBuffer = new SharedArrayBuffer(GisSetting.maxQuadCount * 4)
+
+        let radiuArray = new Float32Array(raduiBuffer)
+        let angleArray = new Float32Array(angleBuffer)
+        let speedArray = new Float32Array(speedBuffer)
+
         for (let i = 0; i < GisSetting.maxQuadCount; i++) {
-            attributes.setPosition(i, new Vector3(this.random(100, -50), this.random(100, -50), this.random(100, -50)));
+            let r = radiuArray[i] = this.normalDistribution(300, 60);
+            let a = angleArray[i] = this.random(Math.PI * 2, 0);
+            speedArray[i] = this.random(0.01, 0.001)
+            attributes.setPosition(i, new Vector3(Math.sin(a) * r, this.normalDistribution(0, 30), Math.cos(a) * r));
             attributes.setColor(i, new Color(this.random(1), this.random(1), this.random(1), 1));
-            attributes.setSize(i, this.random(1, 1));
+            attributes.setSize(i, this.random(5, 1));
         }
 
         // create mutltiple workers to update positions
-        for(let i = 0; i < this._count; i++){
+        for(let i = 0; i < this._thread; i++){
             let p = new process();
             p.postMessage({
                 type:'init', 
                 index: i, 
-                total: this._count, 
-                position: this.positionBuffer
+                total: this._thread, 
+                position: this.positionArray,
+                radius: radiuArray, 
+                angles: angleArray,
+                speeds: speedArray
             })
             p.onmessage = ()=>{
                 this._done ++
-                if(this._done === this._count){
+                if(this._done === this._thread){
                     this._done = 0
                     this._run = false
                     position.isDirty = true
-                    console.timeEnd('process')
+                    console.timeEnd('update')
                 }
             }
             this.workers.push(p)
@@ -107,15 +123,27 @@ export class Sample_GisPoints {
 
     update() {
         // run workers
-        if(!this._run && this.workers.length){
+        if(this.workers.length && !this._run){
             this._run = true
             for(let i = 0; i < this.workers.length; i++){
                 this.workers[i].postMessage('run')
             }
-            console.time('process')
+            console.time('update')
         }
     }
 
+    normalDistribution(mean:number, std_dev:number){
+        return mean + (this.randomNormalDistribution() * std_dev)
+    }
+    randomNormalDistribution(){
+        let u=0.0, v=0.0, w=0.0, c=0.0
+        do{
+            u=Math.random()*2-1.0
+            v=Math.random()*2-1.0
+            w=u*u+v*v
+        }while(w==0.0||w>=1.0)
+        c=Math.sqrt((-2*Math.log(w))/w)
+        return u*c
+    }
 }
-
 
