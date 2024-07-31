@@ -1,4 +1,4 @@
-import { Material, Vector2, ShaderLib, Shader, PassType, Vector3, RenderShaderPass, GPUCompareFunction, GPUCullMode, Texture } from "../../../../src";
+import { Material, Vector2, ShaderLib, Shader, PassType, Vector3, RenderShaderPass, GPUCompareFunction, GPUCullMode, Texture } from "@orillusion/core";
 import { GisPointShader } from "./GisPointShader";
 
 export class GisPointMaterial extends Material {

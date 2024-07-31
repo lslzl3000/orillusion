@@ -1,6 +1,5 @@
 import { AtmosphericComponent, AxisObject, BitmapTexture2D, CameraUtil, Color, DirectLight, Engine3D, HoverCameraController, KelvinUtil, Object3D, Scene3D, Vector3, View3D, } from "@orillusion/core";
 import { Stats } from "@orillusion/stats";
-import { GisSetting } from "./renderer/GisSetting";
 import { GisPointRenderer } from "./renderer/point/GisPointRenderer";
 import img from './grid_circle.png'
 import process from './worker?worker'
@@ -13,7 +12,6 @@ export class Sample_GisPoints {
     lightObj3D: Object3D;
     scene: Scene3D;
     view: View3D;
-    positionArray: Float32Array;
     workers: Worker[] = [];
 
     _run = false;
@@ -66,35 +64,64 @@ export class Sample_GisPoints {
     }
 
     private async addPoints() {
-        GisSetting.maxQuadCount = 1000000;
-
-        let textureList = [];
-        textureList.push( await Engine3D.res.loadTexture('/particle/dust_min.png') );
+        let maxCount = 1000000
 
         let obj = new Object3D();
         this.scene.addChild(obj);
-
-        let renderer = obj.addComponent(GisPointRenderer, textureList);
-
-        let attributes = renderer.attrGroup;
-        let position = attributes.getAttribute('vPositionBuffer');
-        this.positionArray = position.array
         
-        let raduiBuffer = new SharedArrayBuffer(GisSetting.maxQuadCount * 4)
-        let angleBuffer = new SharedArrayBuffer(GisSetting.maxQuadCount * 4)
-        let speedBuffer = new SharedArrayBuffer(GisSetting.maxQuadCount * 4)
+        let raduiBuffer = new SharedArrayBuffer(maxCount * 4)
+        let angleBuffer = new SharedArrayBuffer(maxCount * 4)
+        let speedBuffer = new SharedArrayBuffer(maxCount * 4)
 
         let radiuArray = new Float32Array(raduiBuffer)
         let angleArray = new Float32Array(angleBuffer)
         let speedArray = new Float32Array(speedBuffer)
 
-        for (let i = 0; i < GisSetting.maxQuadCount; i++) {
+        // create a sin/cos value table to speed up sin/cos calculation
+        const TABLE_SIZE = 10000;
+        let sincosBuffer = new SharedArrayBuffer(TABLE_SIZE * 2 * 4)
+        let sincosTable = new Float32Array(sincosBuffer);
+        for (let i = 0; i < TABLE_SIZE * 2; i+=2) {
+            const a = (i / 2 / TABLE_SIZE) * Math.PI * 2
+            sincosTable[i] = Math.sin(a);
+            sincosTable[i+1] = Math.cos(a);
+        }
+
+
+        let textureList = [];
+        textureList.push( await Engine3D.res.loadTexture('/particle/dust_min.png') );
+
+        let renderer = obj.addComponent(GisPointRenderer, {
+            textures: textureList,
+            count: maxCount
+        });
+        let position = renderer.attributes.position;
+        let color = renderer.attributes.color;
+        let size = renderer.attributes.size;
+
+        // prepare data
+        for (let i = 0; i < maxCount; i++) {
             let r = radiuArray[i] = this.normalDistribution(300, 60);
             let a = angleArray[i] = this.random(Math.PI * 2, 0);
-            speedArray[i] = this.random(0.01, 0.001)
-            attributes.setPosition(i, new Vector3(Math.sin(a) * r, this.normalDistribution(0, 30), Math.cos(a) * r));
-            attributes.setColor(i, new Color(this.random(1), this.random(1), this.random(1), 1));
-            attributes.setSize(i, this.random(5, 1));
+            speedArray[i] = this.random(0.005, 0.001)
+            // set position
+            let offset = i * 4
+            position.data[offset] = Math.sin(a) * r
+            position.data[offset+1] = this.normalDistribution(0, 30)
+            position.data[offset+2] = Math.cos(a) * r
+            // set color
+            color.data[offset] = this.random(1)
+            color.data[offset+1] = this.random(1)
+            color.data[offset+2] = this.random(1)
+            // set size
+            size.data[i] = this.random(5, 1)
+            // update buffer
+            position.isDirty = color.isDirty = size.isDirty = true
+            
+            // you can also use inner APIs to set buffers, but it is relatively slower for a large amount data
+            // attributes.setPosition(i, new Vector3(x,y,z))
+            // attributes.setColor(i, new Color(r,g,b,a))
+            // attributes.setSize(i, this.random(5, 1))
         }
 
         // create mutltiple workers to update positions
@@ -104,10 +131,11 @@ export class Sample_GisPoints {
                 type:'init', 
                 index: i, 
                 total: this._thread, 
-                position: this.positionArray,
+                position: position.data,
                 radius: radiuArray, 
                 angles: angleArray,
-                speeds: speedArray
+                speeds: speedArray,
+                sincosTable
             })
             p.onmessage = ()=>{
                 this._done ++
