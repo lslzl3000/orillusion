@@ -1,7 +1,6 @@
 import { AtmosphericComponent, AxisObject, BitmapTexture2D, CameraUtil, Color, DirectLight, Engine3D, HoverCameraController, KelvinUtil, Object3D, Scene3D, Vector3, View3D, } from "@orillusion/core";
 import { Stats } from "@orillusion/stats";
 import { GisPointRenderer } from "./renderer/point/GisPointRenderer";
-import img from './grid_circle.png'
 import process from './worker?worker'
 /**
  *
@@ -36,7 +35,7 @@ export class Sample_GisPoints {
 
         Engine3D.startRenderView(this.view);
 
-        await this.initLight();
+        this.initLight();
         await this.addPoints();
 
         this.scene.addChild(new AxisObject(10, 0.01));
@@ -44,7 +43,7 @@ export class Sample_GisPoints {
         sky.relativeTransform = this.lightObj3D.transform;
     }
 
-    async initLight() {
+    initLight() {
         /******** light *******/
         this.lightObj3D = new Object3D();
         this.lightObj3D.rotationX = 21;
@@ -57,18 +56,8 @@ export class Sample_GisPoints {
         this.scene.addChild(this.lightObj3D);
     }
 
-    random(value: number, base: number = 0) {
-        value *= Math.random();
-        value += base;
-        return value;
-    }
-
     private async addPoints() {
         let maxCount = 1000000
-
-        let obj = new Object3D();
-        this.scene.addChild(obj);
-        
         let raduiBuffer = new SharedArrayBuffer(maxCount * 4)
         let angleBuffer = new SharedArrayBuffer(maxCount * 4)
         let speedBuffer = new SharedArrayBuffer(maxCount * 4)
@@ -88,16 +77,17 @@ export class Sample_GisPoints {
         }
 
 
-        let textureList = [];
-        textureList.push( await Engine3D.res.loadTexture('/particle/dust_min.png') );
-
-        let renderer = obj.addComponent(GisPointRenderer, {
-            textures: textureList,
+        // create a object to hold points
+        let obj = new Object3D();
+        this.scene.addChild(obj);
+        // add GisPointRenderer with textures and count
+        let points = obj.addComponent(GisPointRenderer, {
+            textures: [await Engine3D.res.loadTexture('/particle/dust_min.png')],
             count: maxCount
         });
-        let position = renderer.attributes.position;
-        let color = renderer.attributes.color;
-        let size = renderer.attributes.size;
+        let position = points.attributes.position;
+        let color = points.attributes.color;
+        let size = points.attributes.size;
 
         // prepare data
         for (let i = 0; i < maxCount; i++) {
@@ -163,6 +153,11 @@ export class Sample_GisPoints {
         }
     }
 
+    random(value: number, base: number = 0) {
+        value *= Math.random();
+        value += base;
+        return value;
+    }
     normalDistribution(mean:number, std_dev:number){
         return mean + (this.randomNormalDistribution() * std_dev)
     }
