@@ -408,11 +408,11 @@ export class Quaternion {
         qw = this.w;
 
         a2 = 2 * (qw * qy - qx * qz);
-        if (a2 <= -0.99999) {
+        if (a2 <= -0.999999999) {
             x = 2 * Math.atan2(qx, qw);
             y = -Math.PI / 2;
             z = 0;
-        } else if (a2 >= 0.99999) {
+        } else if (a2 >= 0.999999999) {
             x = 2 * Math.atan2(qx, qw);
             y = Math.PI / 2;
             z = 0;
