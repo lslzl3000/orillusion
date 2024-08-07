@@ -67,7 +67,7 @@ import { Sample_SSGI } from "./post/Sample_SSGI";
     function addIframe() {
         const iframe = document.createElement('iframe') as HTMLIFrameElement
         iframe.srcdoc = `
-        <style>html,body{margin:0;padding:0;overflow:hidden}canvas{touch-action:none}</style>
+        <style>html,body{margin:0;padding:0;overflow:hidden;font-family:Avenir,Helvetica,Arial,sans-serif}canvas{touch-action:none}</style>
         <script>
             let target = sessionStorage.target
             if(target)

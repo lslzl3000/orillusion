@@ -10,6 +10,8 @@ let length = 0;
 let TABLE_SIZE = 0;
 
 let sincosTable: Float32Array;
+const PI2 = Math.PI * 2;
+const PI2_INV = 1 / PI2;
 
 onmessage = e => {
     if(e.data.type == 'init'){
@@ -21,7 +23,6 @@ onmessage = e => {
         position = e.data.position;
         sincosTable = e.data.sincosTable;
         TABLE_SIZE = sincosTable.length / 2;
-
         length = Math.ceil(radius.length / total);
         offset = length * index;
     }else{
@@ -29,18 +30,12 @@ onmessage = e => {
             let a = angles[i] = angles[i] > PI2 ? 0 : angles[i] + speeds[i]
             let r = radius[i]
             
-            let aindex = findAngleIndex(a) * 2
+            let aindex = ~~(a * PI2_INV * TABLE_SIZE) * 2 // fast Math.floor
             position[i * 4] = sincosTable[aindex] * r
             position[i * 4 + 2] = sincosTable[aindex + 1] * r
         }
         postMessage('done')
     }
-}
-
-const PI2 = Math.PI * 2;
-const PI2_INV = 1 / PI2;
-function findAngleIndex(x:number){
-    return ~~(x * PI2_INV * TABLE_SIZE)
 }
 
 export {}

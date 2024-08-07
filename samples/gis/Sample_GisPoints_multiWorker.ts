@@ -2,21 +2,21 @@ import { AtmosphericComponent, AxisObject, BitmapTexture2D, CameraUtil, Color, D
 import { Stats } from "@orillusion/stats";
 import { GisPointRenderer } from "./renderer/point/GisPointRenderer";
 import process from './worker?worker'
-/**
- *
- * @export
- * @class Sample_GisPoints
- */
+
 export class Sample_GisPoints {
     lightObj3D: Object3D;
     scene: Scene3D;
     view: View3D;
+    count: number;
     workers: Worker[] = [];
 
     _run = false;
     _res:any = null;
     _done: number = 0;
-    _thread: number = navigator.hardwareConcurrency - 2;
+    _thread: number = 4;
+    _t: number = 0;
+
+    loop: HTMLElement;
     async run() {
 
         await Engine3D.init({ beforeRender: this.update.bind(this) });
@@ -41,6 +41,11 @@ export class Sample_GisPoints {
         this.scene.addChild(new AxisObject(10, 0.01));
 
         sky.relativeTransform = this.lightObj3D.transform;
+
+        // tips
+        this.loop = document.createElement('h3')
+        this.loop.setAttribute('style', 'position:fixed;right:10px;top:10px;color:red;text-align:right')
+        document.body.appendChild(this.loop)
     }
 
     initLight() {
@@ -57,7 +62,7 @@ export class Sample_GisPoints {
     }
 
     private async addPoints() {
-        let maxCount = 1000000
+        let maxCount = this.count = 1000000
         let raduiBuffer = new SharedArrayBuffer(maxCount * 4)
         let angleBuffer = new SharedArrayBuffer(maxCount * 4)
         let speedBuffer = new SharedArrayBuffer(maxCount * 4)
@@ -75,7 +80,6 @@ export class Sample_GisPoints {
             sincosTable[i] = Math.sin(a);
             sincosTable[i+1] = Math.cos(a);
         }
-
 
         // create a object to hold points
         let obj = new Object3D();
@@ -133,7 +137,7 @@ export class Sample_GisPoints {
                     this._done = 0
                     position.isDirty = true
                     this._res(true)
-                    console.timeEnd('update')
+                    this.loop.innerHTML = `Update ${this.count} points<br>${this._thread} threads in Worker<br>${(performance.now() - this._t).toFixed(2)} ms`;
                 }
             }
             this.workers.push(p)
@@ -145,10 +149,11 @@ export class Sample_GisPoints {
         if(this.workers.length){
             await new Promise(res=>{
                 this._res = res
+                this._t = performance.now()
                 for(let i = 0; i < this._thread; i++){
                     this.workers[i].postMessage('run')
                 }
-                console.time('update')
+                
             })
         }
     }

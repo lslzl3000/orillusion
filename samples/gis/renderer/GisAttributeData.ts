@@ -2,7 +2,7 @@ import { Color, StorageGPUBuffer, Vector3 } from "@orillusion/core";
 
 export type GisAttributeName = 'vSizeBuffer' | 'vTexIndex' | 'vColorBuffer' | 'vPositionBuffer';
 
-class GisAttribute {
+export class GisAttribute {
     public readonly data: Float32Array;
     public readonly buffer: StorageGPUBuffer;
     public readonly name: GisAttributeName;
