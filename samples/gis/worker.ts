@@ -1,39 +1,45 @@
-let index = 0;
-let total = 0;
 let position: Float32Array;
 let radius: Float32Array;
 let angles: Float32Array;
 let speeds: Float32Array;
-let sincosTable: Float32Array;
+let sincos: Float32Array;
 
 let offset = 0;
 let length = 0;
-let TABLE_SIZE = 0;
 
-const PI2 = Math.PI * 2;
-const PI2_INV = 1 / PI2;
+const CONUT = 1000000;
+const PI = Math.PI;
+const PI2 = PI * 2;
+const PI_H = PI / 2;
+const PI_Q = PI / 2 * 3;
+const SIN = Math.sin;
 
 onmessage = e => {
     if(e.data.type == 'init'){
-        index = e.data.index;
-        total = e.data.total;
+        let INDEX = e.data.INDEX;
+        let THREADS = e.data.THREADS;
+
+        position = e.data.position;
         radius = e.data.radius;
         angles = e.data.angles;
         speeds = e.data.speeds;
-        position = e.data.position;
-        sincosTable = e.data.sincosTable;
-        TABLE_SIZE = sincosTable.length / 2;
-        length = Math.ceil(radius.length / total);
-        offset = length * index;
+        sincos = e.data.sincos;
+        length = Math.ceil(CONUT / THREADS);
+        offset = length * INDEX;
     }else{
-        for(let i = offset, l = offset + length; i < l; ++i ){
-            let a = angles[i] = angles[i] > PI2 ? 0 : angles[i] + speeds[i]
+        for(let i = offset, l = Math.min(offset + length, CONUT); i < l; ++i ){
+            let a = angles[i] += speeds[i]
+            if(a > PI2)
+                a = angles[i] = 0
             let r = radius[i]
-            let aIndex = ~~(a * PI2_INV * TABLE_SIZE) * 2
-            position[i * 4] = sincosTable[aIndex] * r
-            position[i * 4 + 2] = sincosTable[aIndex + 1] * r
+            let x = SIN(a) * r
+            let y = (r*r - x*x)**0.5 
+            if (a > PI_H && a < PI_Q)
+                y = -y
+            position[i * 4] = x
+            position[i * 4 + 2] = y
         }
-        postMessage('done')
+        postMessage(0)
     }
 }
 

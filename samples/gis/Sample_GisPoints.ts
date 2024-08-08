@@ -2,26 +2,23 @@ import { AtmosphericComponent, AxisObject, BitmapTexture2D, CameraUtil, Color, D
 import { Stats } from "@orillusion/stats";
 import { GisPointRenderer } from "./renderer/point/GisPointRenderer";
 import { GisAttribute } from "./renderer/GisAttributeData";
-import wasmURL from './wasm.wasm?url'
 
-type wasmModule = {
-    process: (count: number, a: number, r: number, s: number, t: number) => void
-}
+const COUNT = 1000000;
+const PI2 = Math.PI * 2;
+const PI_H = Math.PI / 2;
+const PI_Q = Math.PI / 2 * 3;
+const SIN = Math.sin;
 
 export class Sample_GisPoints {
     lightObj3D: Object3D;
     scene: Scene3D;
     view: View3D;
-    count: number;
-    pOffset: number;
-    aOffset: number;
-    rOffset: number;
-    sOffset: number;
-    tOffset: number;
 
-    poisiton: GisAttribute;
-    tempPosition: Float32Array;
-    module: wasmModule
+    position: GisAttribute;
+    positionArray: Float32Array;
+    angleArray: Float32Array;
+    radiuArray: Float32Array;
+    speedArray: Float32Array;
 
     loop: HTMLElement;
     async run() {
@@ -69,47 +66,28 @@ export class Sample_GisPoints {
     }
 
     private async addPoints() {
-        let maxCount = this.count = 1000000;
         // create a object to hold points
         let obj = new Object3D();
         this.scene.addChild(obj);
         // add GisPointRenderer with textures and count
         let points = obj.addComponent(GisPointRenderer, {
             textures: [await Engine3D.res.loadTexture('/particle/dust_min.png')],
-            count: maxCount
+            count: COUNT
         });
-        let position = this.poisiton = points.attributes.position;
+        let position = this.position = points.attributes.position;
         let color = points.attributes.color;
         let size = points.attributes.size;
 
-        // init wasm
-        let {memory, module} = await this.loadWasm()
-        this.module = module
-        // init data
-        this.aOffset = maxCount * 4;
-        this.rOffset = maxCount * 4 + maxCount;
-        this.sOffset = maxCount * 4 + maxCount * 2;
-        this.tOffset = maxCount * 4 + maxCount * 3;
-        // [position, angle, radius, speed, sincosTable]
-        this.tempPosition = new Float32Array(memory.buffer, 0, maxCount * 4)
-        let angleArray = new Float32Array(memory.buffer, this.aOffset * 4, maxCount)
-        let radiuArray = new Float32Array(memory.buffer, this.rOffset * 4, maxCount)
-        let speedArray = new Float32Array(memory.buffer, this.sOffset * 4, maxCount)
-        
-        // create a sin/cos value table to speed up sin/cos calculation
-        const TABLE_SIZE = 10000;
-        let sincosTable = new Float32Array(memory.buffer, this.tOffset * 4, TABLE_SIZE * 2);
-        for (let i = 0; i < TABLE_SIZE * 2; i+=2) {
-            const a = (i / 2 / TABLE_SIZE) * Math.PI * 2
-            sincosTable[i] = Math.sin(a);
-            sincosTable[i+1] = Math.cos(a);
-        }
+        this.positionArray = position.data;
+        this.angleArray = new Float32Array(COUNT)
+        this.radiuArray = new Float32Array(COUNT)
+        this.speedArray = new Float32Array(COUNT)
 
         // prepare data
-        for (let i = 0; i < maxCount; i++) {
-            let a = angleArray[i] = this.random(Math.PI * 2, 0);
-            let r = radiuArray[i] = this.normalDistribution(300, 60);
-            speedArray[i] = this.random(0.005, 0.001)
+        for (let i = 0; i < COUNT; i++) {
+            let a = this.angleArray[i] = this.random(Math.PI * 2, 0);
+            let r = this.radiuArray[i] = this.normalDistribution(300, 60);
+            this.speedArray[i] = this.random(0.005, 0.001)
             // set position
             let offset = i * 4
             position.data[offset] = Math.sin(a) * r
@@ -129,25 +107,25 @@ export class Sample_GisPoints {
             // attributes.setColor(i, new Color(r,g,b,a))
             // attributes.setSize(i, this.random(5, 1))
         }
-        this.tempPosition.set(this.poisiton.data)
-    }
-
-    async loadWasm(){
-        let memory = new WebAssembly.Memory({initial: 1000})
-        let wasm = await WebAssembly.instantiateStreaming(fetch(wasmURL), {env: {memory}})
-        return {memory, module: wasm.instance.exports as wasmModule}
     }
 
     update() {
-        if(this.module){
-            // update positions in wasm
+        if(this.position){
             let t = performance.now()
-            this.module.process(this.count, this.aOffset, this.rOffset, this.sOffset, this.tOffset)
-            // fast sync/copy tempPosition back to position.data
-            this.poisiton.data.set(this.tempPosition)
-            // inform to update gpu buffer
-            this.poisiton.isDirty = true
-            this.loop.innerHTML = `Update ${this.count} points<br>1 thread with WASM<br>Loop in ${(performance.now() - t).toFixed(2)} ms`;
+            for(let i = 0, l = COUNT; i < l; ++i ){
+                let a = this.angleArray[i] += this.speedArray[i]
+                if(a > PI2)
+                    a = this.angleArray[i] = 0
+                let r = this.radiuArray[i]
+                let x = SIN(a) * r
+                let y = (r*r - x*x)**0.5 
+                if (a > PI_H && a < PI_Q)
+                    y = -y
+                this.positionArray[i * 4] = x
+                this.positionArray[i * 4 + 2] = y
+            }
+            this.position.isDirty = true
+            this.loop.innerHTML = `Update ${COUNT} points<br>Loop in ${(performance.now() - t).toFixed(2)} ms`;
         }
     }
 
