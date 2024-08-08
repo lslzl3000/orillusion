@@ -5,7 +5,7 @@ import { GisAttribute } from "./renderer/GisAttributeData";
 import wasmURL from './wasm.wasm?url'
 
 type wasmModule = {
-    process: (count: number, p: number, a: number, r: number, s: number, t: number) => void
+    process: (count: number, a: number, r: number, s: number, t: number) => void
 }
 
 export class Sample_GisPoints {
@@ -51,7 +51,7 @@ export class Sample_GisPoints {
 
         // tips
         this.loop = document.createElement('h3')
-        this.loop.setAttribute('style', 'position:fixed;right:10px;top:10px;color:red;text-align:right')
+        this.loop.setAttribute('style', 'position:fixed;right:10px;color:red;text-align:right')
         document.body.appendChild(this.loop)
     }
 
@@ -86,13 +86,12 @@ export class Sample_GisPoints {
         let {memory, module} = await this.loadWasm()
         this.module = module
         // init data
-        this.pOffset = 0;
         this.aOffset = maxCount * 4;
         this.rOffset = maxCount * 4 + maxCount;
         this.sOffset = maxCount * 4 + maxCount * 2;
         this.tOffset = maxCount * 4 + maxCount * 3;
-        
-        this.tempPosition = new Float32Array(memory.buffer, this.pOffset * 4, maxCount * 4)
+        // [position, angle, radius, speed, sincosTable]
+        this.tempPosition = new Float32Array(memory.buffer, 0, maxCount * 4)
         let angleArray = new Float32Array(memory.buffer, this.aOffset * 4, maxCount)
         let radiuArray = new Float32Array(memory.buffer, this.rOffset * 4, maxCount)
         let speedArray = new Float32Array(memory.buffer, this.sOffset * 4, maxCount)
@@ -108,8 +107,8 @@ export class Sample_GisPoints {
 
         // prepare data
         for (let i = 0; i < maxCount; i++) {
-            let r = radiuArray[i] = this.normalDistribution(300, 60);
             let a = angleArray[i] = this.random(Math.PI * 2, 0);
+            let r = radiuArray[i] = this.normalDistribution(300, 60);
             speedArray[i] = this.random(0.005, 0.001)
             // set position
             let offset = i * 4
@@ -143,13 +142,12 @@ export class Sample_GisPoints {
         if(this.module){
             // update positions in wasm
             let t = performance.now()
-            this.module.process(this.count, this.pOffset, this.aOffset, this.rOffset, this.sOffset, this.tOffset)
-            this.loop.innerHTML = `Update ${this.count} points<br>1 thread with WASM<br>${(performance.now() - t).toFixed(2)} ms`;
-
+            this.module.process(this.count, this.aOffset, this.rOffset, this.sOffset, this.tOffset)
             // fast sync/copy tempPosition back to position.data
             this.poisiton.data.set(this.tempPosition)
             // inform to update gpu buffer
             this.poisiton.isDirty = true
+            this.loop.innerHTML = `Update ${this.count} points<br>1 thread with WASM<br>Loop in ${(performance.now() - t).toFixed(2)} ms`;
         }
     }
 

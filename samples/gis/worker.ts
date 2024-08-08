@@ -4,12 +4,12 @@ let position: Float32Array;
 let radius: Float32Array;
 let angles: Float32Array;
 let speeds: Float32Array;
+let sincosTable: Float32Array;
 
 let offset = 0;
 let length = 0;
 let TABLE_SIZE = 0;
 
-let sincosTable: Float32Array;
 const PI2 = Math.PI * 2;
 const PI2_INV = 1 / PI2;
 
@@ -29,10 +29,9 @@ onmessage = e => {
         for(let i = offset, l = offset + length; i < l; ++i ){
             let a = angles[i] = angles[i] > PI2 ? 0 : angles[i] + speeds[i]
             let r = radius[i]
-            
-            let aindex = ~~(a * PI2_INV * TABLE_SIZE) * 2 // fast Math.floor
-            position[i * 4] = sincosTable[aindex] * r
-            position[i * 4 + 2] = sincosTable[aindex + 1] * r
+            let aIndex = ~~(a * PI2_INV * TABLE_SIZE) * 2
+            position[i * 4] = sincosTable[aIndex] * r
+            position[i * 4 + 2] = sincosTable[aIndex + 1] * r
         }
         postMessage('done')
     }

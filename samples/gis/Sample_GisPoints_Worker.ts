@@ -44,7 +44,7 @@ export class Sample_GisPoints {
 
         // tips
         this.loop = document.createElement('h3')
-        this.loop.setAttribute('style', 'position:fixed;right:10px;top:10px;color:red;text-align:right')
+        this.loop.setAttribute('style', 'position:fixed;right:10px;color:red;text-align:right')
         document.body.appendChild(this.loop)
     }
 
@@ -95,8 +95,8 @@ export class Sample_GisPoints {
 
         // prepare data
         for (let i = 0; i < maxCount; i++) {
-            let r = radiuArray[i] = this.normalDistribution(300, 60);
             let a = angleArray[i] = this.random(Math.PI * 2, 0);
+            let r = radiuArray[i] = this.normalDistribution(300, 60);
             speedArray[i] = this.random(0.005, 0.001)
             // set position
             let offset = i * 4
@@ -137,7 +137,7 @@ export class Sample_GisPoints {
                     this._done = 0
                     position.isDirty = true
                     this._res(true)
-                    this.loop.innerHTML = `Update ${this.count} points<br>${this._thread} threads in Worker<br>${(performance.now() - this._t).toFixed(2)} ms`;
+                    this.loop.innerHTML = `Update ${this.count} points<br>${this._thread} threads in Worker<br>Loop in ${(performance.now() - this._t).toFixed(2)} ms`;
                 }
             }
             this.workers.push(p)
