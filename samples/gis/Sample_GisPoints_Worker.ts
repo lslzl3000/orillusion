@@ -4,7 +4,7 @@ import { GisPointRenderer } from "./renderer/point/GisPointRenderer";
 import process from './worker?worker'
 
 const COUNT = 1000000;
-const THREADS = 4;
+const THREADS = navigator.hardwareConcurrency - 1;
 
 export class Sample_GisPoints {
     lightObj3D: Object3D;
@@ -145,7 +145,6 @@ export class Sample_GisPoints {
                 for(let i = 0; i < THREADS; ++i){
                     this.workers[i].postMessage('run')
                 }
-                
             })
         }
     }
