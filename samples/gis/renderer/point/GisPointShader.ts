@@ -44,7 +44,7 @@ export class GisPointShader {
                 
         struct MaterialUniform{
             cameraUp:vec3<f32>,
-            screenSize:vec2<f32>,
+            pointSize:f32,
         }
         
         struct VertexOutput {
@@ -121,40 +121,54 @@ export class GisPointShader {
             let yAxis = normalize(cross(zAxis, xAxis));
             return mat3x3<f32>(xAxis, yAxis, zAxis);
         }
+        
+        fn noScalerViewSpace(mvMatrix:mat4x4<f32>, projMatrix:mat4x4<f32>, pos:vec4<f32>) -> f32{
+            let viewPos = mvMatrix * pos;
 
+            var p0 = projMatrix * vec4<f32>(viewPos);
+            var p1 = projMatrix * vec4<f32>(viewPos.xy + vec2<f32>(1.0), viewPos.zw);
+            
+            let size = length(p0.xy / p0.w - p1.xy / p1.w);
+            var screenSize = min(globalUniform.windowWidth, globalUniform.windowHeight);
+            screenSize = max(32.0, screenSize);
+            return 1.0 / (size * screenSize);
+        }
         
         ${this.vs_code}
         @vertex
         fn VertMain( vertex:VertexInput ) -> VertexOutput {
-            var modelMatrix = models.matrix[vertex.index];
             
-            let vertexIndex = vertex.vIndex;
+            let index4u = u32(vertex.vIndex) % 4u;
             let quadIndex = u32(vertex.vIndex * 0.25);
 
-            var localPosXY = getVertexXY(u32(vertexIndex) % 4u);
-            var localUV = getVertexUV(u32(vertexIndex) % 4u);
-            localPosXY *= vSizeBuffer[quadIndex];
+            var localPosXY = getVertexXY(index4u);
+            localPosXY *= vSizeBuffer[quadIndex] * materialUniform.pointSize;
 
-            var localPos = vec4<f32>(localPosXY.xy, vertexIndex * 0.0000001, 1.0);
+            var localUV = getVertexUV(index4u);
+
+            var localPos = vec4<f32>(localPosXY.xy, vertex.vIndex * 0.0000001, 1.0);
             var op = vec4<f32>(0.0001);
 
             let isValidVertex = true;// vSpriteData.vVisible > 0.5;
             if(isValidVertex){
-                var particlePos = vPositionBuffer[quadIndex];
+                let particlePos = vPositionBuffer[quadIndex];
+                let modelMatrix = models.matrix[vertex.index];
+                let mvMatrix =  globalUniform.viewMat * modelMatrix;
+                
+                var scalerQuad = noScalerViewSpace(mvMatrix, globalUniform.projMat, vec4<f32>(particlePos.xyz, 1.0));
+                
+                localPos.x *= scalerQuad;
+                localPos.y *= scalerQuad;
+
                 var wPosition = localPos.xyz;
 
                 var v_mat3 = calcBillboardY(particlePos.xyz, materialUniform.cameraUp.xyz);
                 wPosition = v_mat3 * wPosition;
-        
-                wPosition.x += particlePos.x;
-                wPosition.y += particlePos.y;
-                wPosition.z += particlePos.z;
-
-                var worldPos = (modelMatrix * vec4<f32>(wPosition.xyz, 1.0));
-                var viewPosition = ((globalUniform.viewMat) * worldPos);
-
-
-                op = globalUniform.projMat * viewPosition;
+                
+                wPosition += particlePos.xyz;
+                
+                let mvp = globalUniform.projMat * mvMatrix;
+                op = mvp * vec4<f32>(wPosition.xyz, 1.0);
             }
 
             vertexOut.member = op;

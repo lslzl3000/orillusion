@@ -2,6 +2,7 @@ import { AtmosphericComponent, AxisObject, BitmapTexture2D, CameraUtil, Color, D
 import { Stats } from "@orillusion/stats";
 import { GisPointRenderer } from "./renderer/point/GisPointRenderer";
 import process from './worker?worker'
+import { GUIHelp } from "@orillusion/debug/GUIHelp";
 
 const COUNT = 1000000;
 const THREADS = navigator.hardwareConcurrency - 1;
@@ -12,7 +13,7 @@ export class Sample_GisPoints {
     view: View3D;
     workers: Worker[] = [];
 
-    _res:any = null;
+    _res: any = null;
     _done: number = 0;
     _t: number = 0;
 
@@ -35,6 +36,7 @@ export class Sample_GisPoints {
 
         Engine3D.startRenderView(this.view);
 
+        GUIHelp.init();
         this.initLight();
         await this.addPoints();
 
@@ -79,6 +81,10 @@ export class Sample_GisPoints {
             textures: [await Engine3D.res.loadTexture('/particle/dust_min.png')],
             count: COUNT
         });
+
+        points.pointMaterial.pointSize = 4.0;
+        GUIHelp.add(points.pointMaterial, 'pointSize', 1, 10, 0.01);
+
         let position = points.attributes.position;
         let color = points.attributes.color;
         let size = points.attributes.size;
@@ -91,17 +97,17 @@ export class Sample_GisPoints {
             // set position
             let offset = i * 4
             position.data[offset] = Math.sin(a) * r
-            position.data[offset+1] = this.normalDistribution(0, 30)
-            position.data[offset+2] = Math.cos(a) * r
+            position.data[offset + 1] = this.normalDistribution(0, 30)
+            position.data[offset + 2] = Math.cos(a) * r
             // set color
             color.data[offset] = this.random(1)
-            color.data[offset+1] = this.random(1)
-            color.data[offset+2] = this.random(1)
+            color.data[offset + 1] = this.random(1)
+            color.data[offset + 2] = this.random(1)
             // set size
             size.data[i] = this.random(5, 1)
             // update buffer
             position.isDirty = color.isDirty = size.isDirty = true
-            
+
             // you can also use inner APIs to set buffers, but it is relatively slower for a large amount data
             // attributes.setPosition(i, new Vector3(x,y,z))
             // attributes.setColor(i, new Color(r,g,b,a))
@@ -109,23 +115,23 @@ export class Sample_GisPoints {
         }
 
         // create mutltiple workers to update positions
-        for(let i = 0; i < THREADS; i++){
+        for (let i = 0; i < THREADS; i++) {
             let p = new process();
             // pass data to worker without buffer copy 
             p.postMessage({
-                type:'init', 
-                INDEX: i, 
-                THREADS: THREADS, 
+                type: 'init',
+                INDEX: i,
+                THREADS: THREADS,
                 COUNT: COUNT,
                 position: position.data,
-                radius: radiuArray, 
+                radius: radiuArray,
                 angles: angleArray,
                 speeds: speedArray
             })
             // update position when all workers are done
-            p.onmessage = ()=>{
-                this._done ++
-                if(this._done === THREADS){
+            p.onmessage = () => {
+                this._done++
+                if (this._done === THREADS) {
                     position.isDirty = true
                     this._done = 0
                     this._res(true)
@@ -138,11 +144,11 @@ export class Sample_GisPoints {
 
     async update() {
         // run workers
-        if(this.workers.length){
-            await new Promise(res=>{
+        if (this.workers.length) {
+            await new Promise(res => {
                 this._res = res
                 this._t = performance.now()
-                for(let i = 0; i < THREADS; ++i){
+                for (let i = 0; i < THREADS; ++i) {
                     this.workers[i].postMessage('run')
                 }
             })
@@ -154,18 +160,18 @@ export class Sample_GisPoints {
         value += base;
         return value;
     }
-    normalDistribution(mean:number, std_dev:number){
+    normalDistribution(mean: number, std_dev: number) {
         return mean + (this.randomNormalDistribution() * std_dev)
     }
-    randomNormalDistribution(){
-        let u=0.0, v=0.0, w=0.0, c=0.0
-        do{
-            u=Math.random()*2-1.0
-            v=Math.random()*2-1.0
-            w=u*u+v*v
-        }while(w==0.0||w>=1.0)
-        c=Math.sqrt((-2*Math.log(w))/w)
-        return u*c
+    randomNormalDistribution() {
+        let u = 0.0, v = 0.0, w = 0.0, c = 0.0
+        do {
+            u = Math.random() * 2 - 1.0
+            v = Math.random() * 2 - 1.0
+            w = u * u + v * v
+        } while (w == 0.0 || w >= 1.0)
+        c = Math.sqrt((-2 * Math.log(w)) / w)
+        return u * c
     }
 }
 

@@ -2,7 +2,8 @@ import { Material, Vector2, ShaderLib, Shader, PassType, Vector3, RenderShaderPa
 import { GisPointShader } from "./GisPointShader";
 
 export class GisPointMaterial extends Material {
-    private _screenSize: Vector2 = new Vector2(1024, 768);
+
+    private _pointSize: number = 1;
 
     constructor() {
         super();
@@ -13,16 +14,17 @@ export class GisPointMaterial extends Material {
 
         this.addColorPass(newShader, PassType.COLOR);
         this.shader = newShader;
-
-        newShader.setUniformVector2('screenSize', this._screenSize);
+        this.pointSize = 1.0;
         this.doubleSide = true;
         this.transparent = true;
     }
 
-    public setScreenSize(width: number, height: number): this {
-        this._screenSize.set(width, height);
-        this.shader.setUniformVector2('screenSize', this._screenSize);
-        return this;
+    public get pointSize(): number {
+        return this._pointSize;
+    }
+    public set pointSize(value: number) {
+        this._pointSize = value;
+        this.shader.setUniformFloat('pointSize', this._pointSize);
     }
 
     public setCameraUp(left: Vector3) {
