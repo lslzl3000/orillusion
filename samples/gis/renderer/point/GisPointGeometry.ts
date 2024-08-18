@@ -25,33 +25,9 @@ export class GisPointGeometry extends GeometryBase {
         }
 
         this.setIndices(indices_arr);
-        // let normal_arr = new Float32Array(quadCount * 12);
-        // let uv_arr = new Float32Array(quadCount * 8);
         let v_index = new Float32Array(quadCount * 4);
         for (let i = 0; i < quadCount; i++) {
             offset = i * 12;
-
-            //normal
-            // offset = i * 12;
-            // normal_arr[offset + 1] = 1;
-            // normal_arr[offset + 4] = 1;
-            // normal_arr[offset + 7] = 1;
-            // normal_arr[offset + 11] = 1;
-
-            //uv
-            // offset = i * 8;
-            // uv_arr[offset++] = 0.0;
-            // uv_arr[offset++] = 0.0;
-
-            // uv_arr[offset++] = 1.0;
-            // uv_arr[offset++] = 0.0;
-
-            // uv_arr[offset++] = 0.0;
-            // uv_arr[offset++] = 1.0;
-
-            // uv_arr[offset++] = 1.0;
-            // uv_arr[offset++] = 1.0;
-
             //v index
             offset = i * 4;
             v_index[offset] = offset++;
@@ -61,7 +37,6 @@ export class GisPointGeometry extends GeometryBase {
         }
 
 
-        // this.setAttribute(VertexAttributeName.normal, normal_arr);
         this.setAttribute(VertexAttributeName.vIndex, v_index);
 
         this.addSubGeometry({

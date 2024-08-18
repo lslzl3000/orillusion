@@ -25,8 +25,8 @@ export class GisPointMaterial extends Material {
         return this;
     }
 
-    public setCameraLeft(left: Vector3) {
-        this.shader.setUniformVector3('cameraLeft', left);
+    public setCameraUp(left: Vector3) {
+        this.shader.setUniformVector3('cameraUp', left);
     }
 
     private addColorPass(shader: Shader, passType: PassType) {

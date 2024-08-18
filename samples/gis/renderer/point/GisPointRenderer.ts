@@ -1,7 +1,7 @@
 import { MeshRenderer, BitmapTexture2D, BitmapTexture2DArray, View3D, PassType, RendererPassState, ClusterLightingBuffer } from "@orillusion/core";
-import { GisPointAttrGroup } from "../GisAttributeData";
 import { GisPointGeometry } from "./GisPointGeometry";
 import { GisPointMaterial } from "./GisPointMaterial";
+import { GisPointAttrGroup } from "./GisPointAttrGroup";
 
 export class GisPointRenderer extends MeshRenderer {
     public maxCount: number;
@@ -9,10 +9,10 @@ export class GisPointRenderer extends MeshRenderer {
     public pointsGeometry: GisPointGeometry;
     public attrGroup: GisPointAttrGroup;
 
-    public init(param?: {textures: BitmapTexture2D[], count: number}): void {
+    public init(param?: { textures: BitmapTexture2D[], count: number }): void {
         super.init?.(param);
 
-        let {textures, count} = param;
+        let { textures, count } = param;
         this.maxCount = count
 
         let bitmapTexture2DArray = new BitmapTexture2DArray(textures[0].width, textures[0].height, textures.length);
@@ -35,12 +35,12 @@ export class GisPointRenderer extends MeshRenderer {
 
     public nodeUpdate(view: View3D, passType: PassType, renderPassState: RendererPassState, clusterLightingBuffer: ClusterLightingBuffer): void {
         this.attrGroup.applyAttributes();
-        this.pointMaterial.setCameraLeft(view.camera.transform.left);
+        this.pointMaterial.setCameraUp(view.camera.transform.up);
         super.nodeUpdate(view, passType, renderPassState, clusterLightingBuffer);
     }
 
-    public get attributes(){
+    public get attributes() {
         return this.attrGroup;
     }
-    
+
 }

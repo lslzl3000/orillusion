@@ -43,7 +43,7 @@ export class GisPointShader {
         ${GlobalUniform}
                 
         struct MaterialUniform{
-            cameraLeft:vec3<f32>,
+            cameraUp:vec3<f32>,
             screenSize:vec2<f32>,
         }
         
@@ -98,14 +98,14 @@ export class GisPointShader {
         {
             var ret = vec2<f32>(0.0);
             if(index == 0 || index == 1){
-                ret.y = 0.0f;
-            }else{
-                ret.y = 1.0f;
-            }
-            if(index == 0 || index == 2){
                 ret.x = 0.0f;
             }else{
                 ret.x = 1.0f;
+            }
+            if(index == 0 || index == 2){
+                ret.y = 0.0f;
+            }else{
+                ret.y = 1.0f;
             }
             return ret;
         }
@@ -113,10 +113,10 @@ export class GisPointShader {
 
     public static readonly GisPointShader: string = /* wgsl */ `
 
-        fn calcBillboardY(offsetPos: vec3f, cameraLeft: vec3f) -> mat3x3<f32> {
+        fn calcBillboardY(offsetPos: vec3f, cameraUp: vec3f) -> mat3x3<f32> {
             let eyePos = globalUniform.cameraWorldMatrix[3].xyz;
             let zAxis = normalize(eyePos - offsetPos.xyz);
-            var xAxis = cross(cameraLeft, zAxis);
+            var xAxis = cross(cameraUp, zAxis);
             xAxis = normalize(cross(zAxis, xAxis));
             let yAxis = normalize(cross(zAxis, xAxis));
             return mat3x3<f32>(xAxis, yAxis, zAxis);
@@ -141,17 +141,16 @@ export class GisPointShader {
             let isValidVertex = true;// vSpriteData.vVisible > 0.5;
             if(isValidVertex){
                 var particlePos = vPositionBuffer[quadIndex];
-                var worldMatrix = modelMatrix;
                 var wPosition = localPos.xyz;
 
-                var v_mat3 = calcBillboardY(particlePos.xyz, materialUniform.cameraLeft.xyz);
+                var v_mat3 = calcBillboardY(particlePos.xyz, materialUniform.cameraUp.xyz);
                 wPosition = v_mat3 * wPosition;
         
                 wPosition.x += particlePos.x;
                 wPosition.y += particlePos.y;
                 wPosition.z += particlePos.z;
 
-                var worldPos = (worldMatrix * vec4<f32>(wPosition.xyz, 1.0));
+                var worldPos = (modelMatrix * vec4<f32>(wPosition.xyz, 1.0));
                 var viewPosition = ((globalUniform.viewMat) * worldPos);
 
 

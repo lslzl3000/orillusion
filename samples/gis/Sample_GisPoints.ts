@@ -71,7 +71,7 @@ export class Sample_GisPoints {
         this.scene.addChild(obj);
         // add GisPointRenderer with textures and count
         let points = obj.addComponent(GisPointRenderer, {
-            textures: [await Engine3D.res.loadTexture('/particle/dust_min.png')],
+            textures: [await Engine3D.res.loadTexture('/textures/grid_circle.png', null, true)],
             count: COUNT
         });
         let position = this.position = points.attributes.position;
@@ -91,17 +91,17 @@ export class Sample_GisPoints {
             // set position
             let offset = i * 4
             position.data[offset] = Math.sin(a) * r
-            position.data[offset+1] = this.normalDistribution(0, 30)
-            position.data[offset+2] = Math.cos(a) * r
+            position.data[offset + 1] = this.normalDistribution(0, 30)
+            position.data[offset + 2] = Math.cos(a) * r
             // set color
             color.data[offset] = this.random(1)
-            color.data[offset+1] = this.random(1)
-            color.data[offset+2] = this.random(1)
+            color.data[offset + 1] = this.random(1)
+            color.data[offset + 2] = this.random(1)
             // set size
             size.data[i] = this.random(5, 1)
             // update buffer
             position.isDirty = color.isDirty = size.isDirty = true
-            
+
             // you can also use inner APIs to set buffers, but it is relatively slower for a large amount data
             // attributes.setPosition(i, new Vector3(x,y,z))
             // attributes.setColor(i, new Color(r,g,b,a))
@@ -110,15 +110,15 @@ export class Sample_GisPoints {
     }
 
     update() {
-        if(this.position){
+        if (this.position) {
             let t = performance.now()
-            for(let i = 0, l = COUNT; i < l; ++i ){
+            for (let i = 0, l = COUNT; i < l; ++i) {
                 let a = this.angleArray[i] += this.speedArray[i]
-                if(a > PI2)
+                if (a > PI2)
                     a = this.angleArray[i] = 0
                 let r = this.radiuArray[i]
                 let x = SIN(a) * r
-                let y = (r*r - x*x)**0.5 
+                let y = (r * r - x * x) ** 0.5
                 if (a > PI_H && a < PI_Q)
                     y = -y
                 this.positionArray[i * 4] = x
@@ -134,18 +134,18 @@ export class Sample_GisPoints {
         value += base;
         return value;
     }
-    normalDistribution(mean:number, std_dev:number){
+    normalDistribution(mean: number, std_dev: number) {
         return mean + (this.randomNormalDistribution() * std_dev)
     }
-    randomNormalDistribution(){
-        let u=0.0, v=0.0, w=0.0, c=0.0
-        do{
-            u=Math.random()*2-1.0
-            v=Math.random()*2-1.0
-            w=u*u+v*v
-        }while(w==0.0||w>=1.0)
-        c=Math.sqrt((-2*Math.log(w))/w)
-        return u*c
+    randomNormalDistribution() {
+        let u = 0.0, v = 0.0, w = 0.0, c = 0.0
+        do {
+            u = Math.random() * 2 - 1.0
+            v = Math.random() * 2 - 1.0
+            w = u * u + v * v
+        } while (w == 0.0 || w >= 1.0)
+        c = Math.sqrt((-2 * Math.log(w)) / w)
+        return u * c
     }
 }
 
