@@ -122,16 +122,10 @@ export class GisPointShader {
             return mat3x3<f32>(xAxis, yAxis, zAxis);
         }
         
-        fn noScalerViewSpace(mvMatrix:mat4x4<f32>, projMatrix:mat4x4<f32>, pos:vec4<f32>) -> f32{
-            let viewPos = mvMatrix * pos;
-
-            var p0 = projMatrix * vec4<f32>(viewPos);
-            var p1 = projMatrix * vec4<f32>(viewPos.xy + vec2<f32>(1.0), viewPos.zw);
-            
-            let size = length(p0.xy / p0.w - p1.xy / p1.w);
+        fn noScalerViewSpace(scaleW: f32) -> f32{
             var screenSize = min(globalUniform.windowWidth, globalUniform.windowHeight);
             screenSize = max(32.0, screenSize);
-            return 1.0 / (size * screenSize);
+            return scaleW / screenSize;
         }
         
         ${this.vs_code}
@@ -155,7 +149,9 @@ export class GisPointShader {
                 let modelMatrix = models.matrix[vertex.index];
                 let mvMatrix =  globalUniform.viewMat * modelMatrix;
                 
-                var scalerQuad = noScalerViewSpace(mvMatrix, globalUniform.projMat, vec4<f32>(particlePos.xyz, 1.0));
+                let mvp = globalUniform.projMat * mvMatrix;
+                var scalerQuad = (mvp * vec4<f32>(particlePos.xyz, 1.0)).w;
+                scalerQuad = noScalerViewSpace(scalerQuad);
                 
                 localPos.x *= scalerQuad;
                 localPos.y *= scalerQuad;
@@ -167,13 +163,12 @@ export class GisPointShader {
                 
                 wPosition += particlePos.xyz;
                 
-                let mvp = globalUniform.projMat * mvMatrix;
                 op = mvp * vec4<f32>(wPosition.xyz, 1.0);
             }
 
             vertexOut.member = op;
             
-            vertexOut.vUV = localUV;//vec2<f32>(vertex.uv);
+            vertexOut.vUV = localUV;
             vertexOut.vTextureID = vTexIndex[quadIndex];
             vertexOut.vColor4 = vColorBuffer[quadIndex];
 
