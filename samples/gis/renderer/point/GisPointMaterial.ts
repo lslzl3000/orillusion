@@ -1,9 +1,10 @@
-import { Material, Vector2, ShaderLib, Shader, PassType, Vector3, RenderShaderPass, GPUCompareFunction, GPUCullMode, Texture } from "@orillusion/core";
+import { Material, Vector2, ShaderLib, Shader, PassType, Vector3, RenderShaderPass, GPUCompareFunction, GPUCullMode, Texture, DEGREES_TO_RADIANS } from "@orillusion/core";
 import { GisPointShader } from "./GisPointShader";
 
 export class GisPointMaterial extends Material {
 
     private _pointSize: number = 1;
+    private _fixSize: boolean = true;
 
     constructor() {
         super();
@@ -17,6 +18,10 @@ export class GisPointMaterial extends Material {
         this.pointSize = 1.0;
         this.doubleSide = true;
         this.transparent = true;
+
+        this.shader.setUniformVector3('cameraUp', Vector3.UP);
+        this.shader.setUniformFloat('fov', 60);
+        this.shader.setUniformFloat('fixSize', this._fixSize ? 1 : 0);
     }
 
     public get pointSize(): number {
@@ -27,8 +32,17 @@ export class GisPointMaterial extends Material {
         this.shader.setUniformFloat('pointSize', this._pointSize);
     }
 
-    public setCameraUp(left: Vector3) {
-        this.shader.setUniformVector3('cameraUp', left);
+    public get fixSize(): boolean {
+        return this._fixSize;
+    }
+    public set fixSize(value: boolean) {
+        this._fixSize = value;
+        this.shader.setUniformFloat('fixSize', this._fixSize ? 1 : 0);
+    }
+
+    public setCameraData(up: Vector3, fov: number) {
+        this.shader.setUniformVector3('cameraUp', up);
+        this.shader.setUniformFloat('fov', fov * 0.5 * DEGREES_TO_RADIANS);
     }
 
     private addColorPass(shader: Shader, passType: PassType) {

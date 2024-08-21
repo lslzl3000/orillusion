@@ -35,7 +35,7 @@ export class GisPointRenderer extends MeshRenderer {
 
     public nodeUpdate(view: View3D, passType: PassType, renderPassState: RendererPassState, clusterLightingBuffer: ClusterLightingBuffer): void {
         this.attrGroup.applyAttributes();
-        this.pointMaterial.setCameraUp(view.camera.transform.up);
+        this.pointMaterial.setCameraData(view.camera.transform.up, view.camera.fov);
         super.nodeUpdate(view, passType, renderPassState, clusterLightingBuffer);
     }
 

@@ -84,6 +84,8 @@ export class Sample_GisPoints {
 
         points.pointMaterial.pointSize = 4.0;
         GUIHelp.add(points.pointMaterial, 'pointSize', 1, 10, 0.01);
+        GUIHelp.add(points.pointMaterial, 'fixSize');
+        GUIHelp.add(this.view.camera, 'fov', 1, 90, 0.1);
 
         let position = points.attributes.position;
         let color = points.attributes.color;

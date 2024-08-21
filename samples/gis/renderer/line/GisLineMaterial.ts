@@ -2,8 +2,6 @@ import { Material, Vector2, ShaderLib, Shader, PassType, Vector3, RenderShaderPa
 import { GisLineShader } from "./GisLineShader";
 
 export class GisLineMaterial extends Material {
-    private _screenSize: Vector2 = new Vector2(1024, 768);
-
     constructor() {
         super();
 
@@ -14,14 +12,12 @@ export class GisLineMaterial extends Material {
         this.addColorPass(newShader, PassType.COLOR);
         this.shader = newShader;
 
-        newShader.setUniformVector2('screenSize', this._screenSize);
         this.setLineData(1, 0, 1, 0, 1);
         this.doubleSide = true;
         this.transparent = true;
         this.blendMode = BlendMode.NORMAL;
         this.depthWriteEnabled = false;
     }
-
 
     private _lineWidth: number = 1;
     public get lineWidth(): number {
@@ -66,12 +62,6 @@ export class GisLineMaterial extends Material {
     public set vSpeed(value: number) {
         this._vSpeed = value;
         this.setLineData(this._uScale, this._uSpeed, this._vScale, this._vSpeed, this._lineWidth);
-    }
-
-    public setScreenSize(width: number, height: number): this {
-        this._screenSize.set(width, height);
-        this.shader.setUniformVector2('screenSize', this._screenSize);
-        return this;
     }
 
     private setLineData(uScale: number, uSpeed: number, vScale: number, vSpeed: number, lineWidth: number) {

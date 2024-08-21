@@ -77,7 +77,7 @@ export class Sample_GisLine {
         this.scene.addChild(obj);
         // add GisLineRenderer with textures and count
         let line = obj.addComponent(GisLineRenderer, {
-            textures: [await Engine3D.res.loadTexture('/arrow.png', null, true)],
+            textures: [await Engine3D.res.loadTexture('/textures/arrow.png', null, true)],
             // textures: [await Engine3D.res.loadTexture('/textures/grid_circle.png', null, true)],
             count: COUNT
         });

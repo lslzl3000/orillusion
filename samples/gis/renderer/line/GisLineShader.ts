@@ -43,7 +43,6 @@ export class GisLineShader {
             vScale:f32,
             vSpeed:f32,
             lineWidth:f32,
-            screenSize:vec2<f32>,
         }
         
         struct VertexOutput {

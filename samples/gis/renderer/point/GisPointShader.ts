@@ -45,6 +45,8 @@ export class GisPointShader {
         struct MaterialUniform{
             cameraUp:vec3<f32>,
             pointSize:f32,
+            fov:f32,
+            fixSize:f32,
         }
         
         struct VertexOutput {
@@ -125,7 +127,7 @@ export class GisPointShader {
         fn noScalerViewSpace(scaleW: f32) -> f32{
             var screenSize = min(globalUniform.windowWidth, globalUniform.windowHeight);
             screenSize = max(32.0, screenSize);
-            return scaleW / screenSize;
+            return scaleW * tan(materialUniform.fov) / screenSize;
         }
         
         ${this.vs_code}
@@ -150,11 +152,12 @@ export class GisPointShader {
                 let mvMatrix =  globalUniform.viewMat * modelMatrix;
                 
                 let mvp = globalUniform.projMat * mvMatrix;
-                var scalerQuad = (mvp * vec4<f32>(particlePos.xyz, 1.0)).w;
-                scalerQuad = noScalerViewSpace(scalerQuad);
-                
-                localPos.x *= scalerQuad;
-                localPos.y *= scalerQuad;
+                if(materialUniform.fixSize > 0.5){
+                    let ndcW = (mvp * vec4<f32>(particlePos.xyz, 1.0)).w;
+                    let scalerQuad = noScalerViewSpace(ndcW);
+                    localPos.x *= scalerQuad;
+                    localPos.y *= scalerQuad;
+                }
 
                 var wPosition = localPos.xyz;
 
