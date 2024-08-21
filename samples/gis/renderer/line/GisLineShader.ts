@@ -43,6 +43,7 @@ export class GisLineShader {
             vScale:f32,
             vSpeed:f32,
             lineWidth:f32,
+            fov:f32,
             fixSize:f32,
             isTextureUp:f32,
         }
@@ -83,13 +84,20 @@ export class GisLineShader {
 
         var<private> vertexOut: VertexOutput ;
 
+        fn noScalerViewSpace(scaleW: f32) -> f32{
+            var screenSize = min(globalUniform.windowWidth, globalUniform.windowHeight);
+            screenSize = max(32.0, screenSize);
+            return scaleW * tan(materialUniform.fov) / screenSize;
+        }
+
+
         //quad: (left, bottom, right, top)
         //index: 0 1
         //index: 2 3
-
-        fn getVertexPosition_dash(index:u32, segmentIndex:u32) -> vec3<f32>
+        //dash dot-line
+        fn getVertexPosition_dash(index4u:u32, segmentIndex:u32, mvp:mat4x4<f32>) -> vec3<f32>
         {
-            let halfWidth = materialUniform.lineWidth * vLineWidth[segmentIndex] * 0.5;
+            let segmentHalfWidth = vLineWidth[segmentIndex] * 0.5;
             let segmentPosData = vPositionBuffer[segmentIndex];
             let startPoint = segmentPosData.startPoint.xyz;
             let endPoint = segmentPosData.endPoint.xyz;
@@ -99,23 +107,37 @@ export class GisLineShader {
             let centerPoint = (startPoint + endPoint).xyz * 0.5;
             let right = normalize(cross(normalize(centerPoint - cameraPos), forward));
 
-            var ret = vec3<f32>(0.0);
-            if(index == 0u){
-                ret = startPoint - right * halfWidth;
-            }else if(index == 1u){
-                ret = endPoint - right * halfWidth;
-            }else if(index == 2u){
-                ret = startPoint + right * halfWidth;
+            var side:vec3<f32>;
+            var origin:vec3<f32>;
+
+            if(index4u % 2u == 0u){
+                origin = startPoint;
             }else{
-                ret = endPoint + right * halfWidth;
+                origin = endPoint;
             }
+
+            if(index4u < 2u){
+                side = -right;
+            }else{
+                side = right;
+            }
+
+            let ret = calcVertexPosition(forward, side, origin, segmentHalfWidth, materialUniform.lineWidth, materialUniform.fixSize > 0.5, mvp);
             return ret;
         }
 
-        fn getVertexPosition_solid(index:u32, segmentIndex:u32) -> vec3<f32>
+        //solid solid-line
+        //index: 0 1
+        //index: 2 3
+        fn getVertexPosition_solid(index4u:u32, segmentIndex:u32, mvp:mat4x4<f32>) -> vec3<f32>
         {
-            let halfWidth = materialUniform.lineWidth * vLineWidth[segmentIndex] * 0.5;
-            let segmentPosData = vPositionBuffer[segmentIndex];
+            var useSegmentIndex = segmentIndex;
+            if(index4u % 2u == 0u){
+                useSegmentIndex -= 1u;//使用上一段的end
+            }
+
+            let segmentHalfWidth = vLineWidth[useSegmentIndex] * 0.5;
+            let segmentPosData = vPositionBuffer[useSegmentIndex];
             let startPoint = segmentPosData.startPoint.xyz;
             let endPoint = segmentPosData.endPoint.xyz;
             let cameraPos = globalUniform.CameraPos.xyz;
@@ -124,20 +146,32 @@ export class GisLineShader {
             let centerPoint = (startPoint + endPoint).xyz * 0.5;
             let right = normalize(cross(normalize(centerPoint - cameraPos), forward));
 
-            var ret = vec3<f32>(0.0);
-            if(index == 0u){
-                ret = startPoint - right * halfWidth;
-            }else if(index == 1u){
-                ret = endPoint - right * halfWidth;
-            }else if(index == 2u){
-                ret = startPoint + right * halfWidth;
+            var side:vec3<f32>;
+            var origin = endPoint;
+
+            if(index4u < 2u){
+                side = -right;
             }else{
-                ret = endPoint + right * halfWidth;
+                side = right;
             }
+
+            let ret = calcVertexPosition(forward, side, origin, segmentHalfWidth, materialUniform.lineWidth, materialUniform.fixSize > 0.5, mvp);
             return ret;
         }
 
-        fn getVertexUV(index:u32, segmentIndex:u32) -> vec2<f32>
+        fn calcVertexPosition(forward:vec3<f32>, side:vec3<f32>, origin:vec3<f32>, segmentHalfWidth:f32, lineWidth:f32, fixSize:bool, mvp:mat4x4<f32>) -> vec3<f32>
+        {
+            var destWidth = segmentHalfWidth * lineWidth;
+            if(fixSize){
+                let ndcW = (mvp * vec4<f32>(origin, 1.0)).w;
+                let scalerQuad = noScalerViewSpace(ndcW);
+                destWidth *= scalerQuad;
+            }
+            var vertexPos:vec3<f32> = origin + side * destWidth;
+            return vertexPos;
+        }
+
+        fn getVertexUV(index4u:u32, segmentIndex:u32) -> vec2<f32>
         {
             let segmentPosData = vPositionBuffer[segmentIndex];
 
@@ -158,11 +192,11 @@ export class GisLineShader {
             let uMoveOffset =  globalUniform.time * materialUniform.uSpeed;
 
             var ret = vec2<f32>(0.0);
-            if(index == 0){
+            if(index4u == 0){
                 ret = vec2<f32>(uMoveOffset, fromV);
-            }else if(index == 1){
+            }else if(index4u == 1){
                 ret = vec2<f32>(uMoveOffset, endV);
-            }else if(index == 2){
+            }else if(index4u == 2){
                 ret = vec2<f32>(uScale + uMoveOffset, fromV);
             }else{
                 ret = vec2<f32>(uScale + uMoveOffset, endV);
@@ -170,7 +204,7 @@ export class GisLineShader {
             return ret;
         }
 
-        fn getVertexColor(index:u32, segmentIndex:u32) -> vec4<f32>{
+        fn getVertexColor(index4u:u32, segmentIndex:u32) -> vec4<f32>{
             let colorStartEnd = vColorIndex[segmentIndex];
 
             let startColor = vColorBuffer[u32(colorStartEnd.x)];
@@ -178,7 +212,7 @@ export class GisLineShader {
 
             var ret = vec4<f32>(0.0);
             var colorIndex = 0u;
-            if(index == 0 || index == 2){
+            if(index4u == 0 || index4u == 2){
                 colorIndex = u32(colorStartEnd.x);
             }else{
                 colorIndex = u32(colorStartEnd.y);
@@ -194,6 +228,7 @@ export class GisLineShader {
         @vertex
         fn VertMain( vertex:VertexInput ) -> VertexOutput {
             var modelMatrix = models.matrix[vertex.index];
+            let mvp = globalUniform.projMat * globalUniform.viewMat * modelMatrix;
             
             let index4u = u32(vertex.vIndex) % 4u;
             let segmentIndex = u32(vertex.vIndex * 0.25);
@@ -203,9 +238,9 @@ export class GisLineShader {
 
             var localPosition: vec3<f32>;
             if(lineType == 0u || segmentIndex == 0u){
-                localPosition = getVertexPosition_dash(index4u, segmentIndex);
+                localPosition = getVertexPosition_dash(index4u, segmentIndex, mvp);
             }else if(lineType == 1u){
-                localPosition = getVertexPosition_solid(index4u, segmentIndex);
+                localPosition = getVertexPosition_solid(index4u, segmentIndex, mvp);
             }
 
             var localUV = getVertexUV(index4u, segmentIndex);
@@ -215,7 +250,6 @@ export class GisLineShader {
                 vertexOut.vUV = localUV;
             }
 
-            let mvp = globalUniform.projMat * globalUniform.viewMat * modelMatrix;
             var op = mvp * vec4<f32>(localPosition.xyz, 1.0);
             vertexOut.member = op;
             

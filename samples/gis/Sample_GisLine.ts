@@ -5,7 +5,7 @@ import { GisLineRenderer } from "./renderer/line/GisLineRenderer";
 import { GUIUtil } from "@samples/utils/GUIUtil";
 import { GUIHelp } from "@orillusion/debug/GUIHelp";
 
-const COUNT = 1000000;
+const COUNT = 100000;
 const COLOR_COUNT = 128;
 const PI2 = Math.PI * 2;
 const PI_H = Math.PI / 2;
@@ -39,15 +39,15 @@ export class Sample_GisLine {
         GUIHelp.init();
         this.initLight();
         let line = await this.addSegments();
-        line.lineMaterial.vSpeed = -0.0002;
+        line.lineMaterial.vSpeed = -0.001;
         line.lineMaterial.vScale = 0.02;
-        line.lineMaterial.lineWidth = 4;
+        line.lineMaterial.lineWidth = 6;
         line.lineMaterial.isTextureUp = false;
         GUIHelp.add(line.lineMaterial, 'uSpeed', -0.1, 0.1, 0.0001);
         GUIHelp.add(line.lineMaterial, 'uScale', -2, 2, 0.0001);
         GUIHelp.add(line.lineMaterial, 'vSpeed', -0.1, 0.1, 0.0001);
         GUIHelp.add(line.lineMaterial, 'vScale', -2, 2, 0.0001);
-        GUIHelp.add(line.lineMaterial, 'lineWidth', 1, 10, 0.01);
+        GUIHelp.add(line.lineMaterial, 'lineWidth', 1, 100, 0.01);
         GUIHelp.add(line.lineMaterial, 'fixSize');
         GUIHelp.add(line.lineMaterial, 'isTextureUp');
         this.scene.addChild(new AxisObject(10, 0.01));
@@ -97,8 +97,8 @@ export class Sample_GisLine {
             let [from, to] = this.nextSegment();
             attributes.setPosition(i, from, to);
             attributes.setColorIndex(i, i % COLOR_COUNT, (i + 1) % COLOR_COUNT);
-            attributes.setLineWidth(i, 2 * (1 + Math.sin(i * 0.5) * 0.9));
-            attributes.setLineType(i, LineType.DASH);
+            attributes.setLineWidth(i, 2);
+            attributes.setLineType(i, LineType.SOLID);
         }
         return line;
     }
@@ -116,7 +116,7 @@ export class Sample_GisLine {
     width = 1;
 
     nextSegment(): [Vector4, Vector4] {
-        let emptyRatio = 0.2;
+        let emptyRatio = 0;
 
         let radius = this.radius + Math.sin(this.height * 0.01) * 200;
         //________from point

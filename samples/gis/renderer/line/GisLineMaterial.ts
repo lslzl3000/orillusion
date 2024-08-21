@@ -1,4 +1,4 @@
-import { Material, Vector2, ShaderLib, Shader, PassType, Vector3, RenderShaderPass, GPUCompareFunction, GPUCullMode, Texture, BlendMode } from "@orillusion/core";
+import { Material, Vector2, ShaderLib, Shader, PassType, Vector3, RenderShaderPass, GPUCompareFunction, GPUCullMode, Texture, BlendMode, DEGREES_TO_RADIANS } from "@orillusion/core";
 import { GisLineShader } from "./GisLineShader";
 
 export class GisLineMaterial extends Material {
@@ -23,6 +23,11 @@ export class GisLineMaterial extends Material {
 
         this.shader.setUniformFloat('fixSize', this._fixSize ? 1 : 0);
         this.shader.setUniformFloat('isTextureUp', this._isTextureUp ? 1 : 0);
+        this.shader.setUniformFloat('fov', 60);
+    }
+
+    public setCameraData(fov: number) {
+        this.shader.setUniformFloat('fov', fov * 0.5 * DEGREES_TO_RADIANS);
     }
 
     private _lineWidth: number = 1;
