@@ -47,6 +47,7 @@ export class GisPointShader {
             pointSize:f32,
             fov:f32,
             fixSize:f32,
+            isTextureUp:f32,
         }
         
         struct VertexOutput {
@@ -171,7 +172,11 @@ export class GisPointShader {
 
             vertexOut.member = op;
             
-            vertexOut.vUV = localUV;
+            if(materialUniform.isTextureUp < 0.5){
+                vertexOut.vUV = localUV.yx;
+            }else{
+                vertexOut.vUV = localUV;
+            }
             vertexOut.vTextureID = vTexIndex[quadIndex];
             vertexOut.vColor4 = vColorBuffer[quadIndex];
 

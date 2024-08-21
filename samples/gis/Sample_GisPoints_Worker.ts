@@ -78,13 +78,15 @@ export class Sample_GisPoints {
         this.scene.addChild(obj);
         // add GisPointRenderer with textures and count
         let points = obj.addComponent(GisPointRenderer, {
-            textures: [await Engine3D.res.loadTexture('/particle/dust_min.png')],
+            // textures: [await Engine3D.res.loadTexture('/particle/dust_min.png')],
+            textures: [await Engine3D.res.loadTexture('/textures/grid.jpg', null)],
             count: COUNT
         });
 
         points.pointMaterial.pointSize = 4.0;
         GUIHelp.add(points.pointMaterial, 'pointSize', 1, 10, 0.01);
         GUIHelp.add(points.pointMaterial, 'fixSize');
+        GUIHelp.add(points.pointMaterial, 'isTextureUp');
         GUIHelp.add(this.view.camera, 'fov', 1, 90, 0.1);
 
         let position = points.attributes.position;

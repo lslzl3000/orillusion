@@ -5,6 +5,7 @@ export class GisPointMaterial extends Material {
 
     private _pointSize: number = 1;
     private _fixSize: boolean = true;
+    private _isTextureUp: boolean = true;
 
     constructor() {
         super();
@@ -22,6 +23,7 @@ export class GisPointMaterial extends Material {
         this.shader.setUniformVector3('cameraUp', Vector3.UP);
         this.shader.setUniformFloat('fov', 60);
         this.shader.setUniformFloat('fixSize', this._fixSize ? 1 : 0);
+        this.shader.setUniformFloat('isTextureUp', this._isTextureUp ? 1 : 0);
     }
 
     public get pointSize(): number {
@@ -30,6 +32,13 @@ export class GisPointMaterial extends Material {
     public set pointSize(value: number) {
         this._pointSize = value;
         this.shader.setUniformFloat('pointSize', this._pointSize);
+    }
+    public get isTextureUp(): boolean {
+        return this._isTextureUp;
+    }
+    public set isTextureUp(value: boolean) {
+        this._isTextureUp = value;
+        this.shader.setUniformFloat('isTextureUp', this._isTextureUp ? 1 : 0);
     }
 
     public get fixSize(): boolean {

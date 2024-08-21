@@ -39,14 +39,17 @@ export class Sample_GisLine {
         GUIHelp.init();
         this.initLight();
         let line = await this.addSegments();
-        line.lineMaterial.vSpeed = -0.002;
+        line.lineMaterial.vSpeed = -0.0002;
         line.lineMaterial.vScale = 0.02;
         line.lineMaterial.lineWidth = 4;
+        line.lineMaterial.isTextureUp = false;
         GUIHelp.add(line.lineMaterial, 'uSpeed', -0.1, 0.1, 0.0001);
         GUIHelp.add(line.lineMaterial, 'uScale', -2, 2, 0.0001);
         GUIHelp.add(line.lineMaterial, 'vSpeed', -0.1, 0.1, 0.0001);
         GUIHelp.add(line.lineMaterial, 'vScale', -2, 2, 0.0001);
         GUIHelp.add(line.lineMaterial, 'lineWidth', 1, 10, 0.01);
+        GUIHelp.add(line.lineMaterial, 'fixSize');
+        GUIHelp.add(line.lineMaterial, 'isTextureUp');
         this.scene.addChild(new AxisObject(10, 0.01));
 
         sky.relativeTransform = this.lightObj3D.transform;
@@ -77,7 +80,7 @@ export class Sample_GisLine {
         this.scene.addChild(obj);
         // add GisLineRenderer with textures and count
         let line = obj.addComponent(GisLineRenderer, {
-            textures: [await Engine3D.res.loadTexture('/textures/arrow.png', null, true)],
+            textures: [await Engine3D.res.loadTexture('/png/logo.png', null)],
             // textures: [await Engine3D.res.loadTexture('/textures/grid_circle.png', null, true)],
             count: COUNT
         });

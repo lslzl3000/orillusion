@@ -43,6 +43,8 @@ export class GisLineShader {
             vScale:f32,
             vSpeed:f32,
             lineWidth:f32,
+            fixSize:f32,
+            isTextureUp:f32,
         }
         
         struct VertexOutput {
@@ -207,7 +209,11 @@ export class GisLineShader {
             }
 
             var localUV = getVertexUV(index4u, segmentIndex);
-            vertexOut.vUV = localUV;
+            if(materialUniform.isTextureUp < 0.5){
+                vertexOut.vUV = localUV.yx;
+            }else{
+                vertexOut.vUV = localUV;
+            }
 
             let mvp = globalUniform.projMat * globalUniform.viewMat * modelMatrix;
             var op = mvp * vec4<f32>(localPosition.xyz, 1.0);

@@ -2,6 +2,9 @@ import { Material, Vector2, ShaderLib, Shader, PassType, Vector3, RenderShaderPa
 import { GisLineShader } from "./GisLineShader";
 
 export class GisLineMaterial extends Material {
+    private _fixSize: boolean = true;
+    private _isTextureUp: boolean = true;
+
     constructor() {
         super();
 
@@ -17,6 +20,9 @@ export class GisLineMaterial extends Material {
         this.transparent = true;
         this.blendMode = BlendMode.NORMAL;
         this.depthWriteEnabled = false;
+
+        this.shader.setUniformFloat('fixSize', this._fixSize ? 1 : 0);
+        this.shader.setUniformFloat('isTextureUp', this._isTextureUp ? 1 : 0);
     }
 
     private _lineWidth: number = 1;
@@ -62,6 +68,22 @@ export class GisLineMaterial extends Material {
     public set vSpeed(value: number) {
         this._vSpeed = value;
         this.setLineData(this._uScale, this._uSpeed, this._vScale, this._vSpeed, this._lineWidth);
+    }
+
+    public get isTextureUp(): boolean {
+        return this._isTextureUp;
+    }
+    public set isTextureUp(value: boolean) {
+        this._isTextureUp = value;
+        this.shader.setUniformFloat('isTextureUp', this._isTextureUp ? 1 : 0);
+    }
+
+    public get fixSize(): boolean {
+        return this._fixSize;
+    }
+    public set fixSize(value: boolean) {
+        this._fixSize = value;
+        this.shader.setUniformFloat('fixSize', this._fixSize ? 1 : 0);
     }
 
     private setLineData(uScale: number, uSpeed: number, vScale: number, vSpeed: number, lineWidth: number) {
